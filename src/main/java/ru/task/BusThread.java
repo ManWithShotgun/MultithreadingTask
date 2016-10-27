@@ -7,15 +7,17 @@ import org.apache.log4j.Logger;
  */
 public class BusThread extends Thread {
     private Logger log;
-    private int maxSeats =2, seats=0, checked=0, oldSets=0, startIndex, startMove;
+    private int maxSeats =2, passengers =0, checkCount =0, oldCountPassengers =0,
+            startIndex, startVector, busNumber, idleCount, maxIdleCount;
     private BusStop currentBusStop;
     private Object sleepObj=new Object();
 
-    public BusThread(int startIndex, int startMove) {
+    public BusThread(int busNumber, int startIndex, int startVector) {
+        this.busNumber=busNumber;
         this.startIndex=startIndex;
-        this.startMove=startMove;
-        log=Logger.getLogger("Bus");
-        this.setName("Bus");
+        this.startVector = startVector;
+        log=Logger.getLogger("Bus"+busNumber);
+        this.setName("Bus"+busNumber);
     }
 
     @Override
@@ -23,13 +25,21 @@ public class BusThread extends Thread {
         try {
             log.debug("Start");
             int countBusStop=BusStops.busStops.size();
-            for (int index=startIndex, j=startMove;BusStops.getTotalCountWalkersAlive()!=0;){
+            maxIdleCount=countBusStop*2+1;
+            boolean move=true;
+            for (int index = startIndex, j = startVector; move;){
                 //region calc step
                 if(index==countBusStop-1)
                     j=-1;
                 if(index==0)
                     j=1;
                 //endregion
+                if(passengers==0)
+                    idleCount++;
+                else
+                    idleCount=0;
+                if(idleCount>=maxIdleCount)
+                    move=false;
                 move();
                 step(index);
                 index+=j;
@@ -42,22 +52,12 @@ public class BusThread extends Thread {
     }
 
     private void move() throws InterruptedException {
-//        Thread.sleep(1000);//simulation moving from bus stop i to bus stop i+1
+        Thread.sleep(100);//simulation moving from bus stop i to bus stop i+1
     }
 
     private void step(int i){
         log.debug("going to "+i);
         BusStops.busStops.get(i).notifyAllOnBS(log,this);
-//        BusStop busStop= BusStops.busStops.get(i);
-//        synchronized (busStop){
-//            this.currentBusStop=busStop;
-//            synchronized (this){
-//                this.notifyAll();
-//            }
-//            busStop.setBus(this);
-//            busStop.notifyAll();
-//            /*add waiting on bus stop*/
-//        }
         log.debug("running");
     }
 
@@ -79,24 +79,24 @@ public class BusThread extends Thread {
 
     public synchronized void waitInBus(Logger log, int indexEnd){
         try {
+            log.debug(this.log.getName()+" | sat in Bus");
             boolean move=true;
             while (move) {
-                log.debug("sat in Bus");
                 this.wait();
                 if (this.getCurrentBusStop().getNumber() == indexEnd) {
-                    this.decreaseSeats();
-                    log.debug("end point");
-                    BusStops.decreaseTotalCountWalkersAlive();
+                    this.decreasePassengers();
+                    log.debug(this.log.getName()+" | end point");
+//                    BusStops.decreaseTotalCountWalkersAlive();
                     move=false;
                 }
-                /*count checked walkers && bus is full -> run*/
-                this.checked++;
-                log.debug("checked walker");
-                if(checked==oldSets){
+                /*count checkCount walkers && bus is full -> run*/
+                this.checkCount++;
+                log.debug(this.log.getName()+" | check walker");
+                if(checkCount == oldCountPassengers){
                     this.wakeUpDriverBus();
-                    this.checked=0;
+                    this.checkCount =0;
                 }
-                log.debug("not my stop");
+//                log.debug(this.log.getName()+" | not my stop");
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -104,24 +104,24 @@ public class BusThread extends Thread {
     }
 
     public synchronized void wakeUpWalkersInBus(){
-        this.oldSets=seats;//not using now
+        this.oldCountPassengers = passengers;//not using now
         this.notifyAll();
     }
 
-    public int  getSeats(){
-        return seats;
+    public int getPassengers(){
+        return passengers;
     }
 
     public boolean isSeatsFree(){
-        return (maxSeats - seats)!=0 ;
+        return (maxSeats - passengers)!=0 ;
     }
 
-    public void increaseSeats(){
-        this.seats++;
+    public void increasePassengers(){
+        this.passengers++;
     }
 
-    public void decreaseSeats(){
-        this.seats--;
+    public void decreasePassengers(){
+        this.passengers--;
     }
 
     public BusStop getCurrentBusStop(){
