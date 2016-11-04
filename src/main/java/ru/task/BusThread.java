@@ -6,6 +6,31 @@ import org.apache.log4j.Logger;
  * Created by ILIA on 23.10.2016.
  */
 public class BusThread extends Thread {
+
+    class RoutePoint{
+        int index, countExit=0;
+
+        public RoutePoint(int index) {
+            this.index = index;
+        }
+
+        public int getIndex() {
+            return index;
+        }
+
+        public int getCountExit() {
+            return countExit;
+        }
+
+        public void increaseCountExit(){
+            this.countExit++;
+        }
+
+        public void decreaseCountExit(){
+            this.countExit--;
+        }
+    }
+
     private Logger log;
     private int maxSeats =2, passengers =0, checkCount =0, oldCountPassengers =0,
             startIndex, startVector, busNumber, idleCount, maxIdleCount;
