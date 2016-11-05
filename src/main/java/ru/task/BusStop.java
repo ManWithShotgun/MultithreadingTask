@@ -8,29 +8,37 @@ import org.apache.log4j.Logger;
  */
 public class BusStop {
     private BusThread busThread;//current bus in bus stop
-    private int number, countWalkers=0;
+    private int number, countWalkers=0, oldCountWalkers,checkWalkers;
 
-    public synchronized BusThread waitOnBS(Logger log){
-//        BusStops.increaseTotalCountWalkersAlive();
-        this.countWalkers++;
+    /*Логика пассажиров на остановке*/
+    public synchronized BusThread waitOnBS(Logger log, int vector){
+        this.countWalkers++;//увел. кол-во людей на остановке
+        boolean wait=true;
         try {
-            while (true) {
+            while (wait) {
                 log.debug("wait Bus...");
                 this.wait();
-                log.debug("ooo Bus!!!");
-                if (busThread!=null && busThread.isSeatsFree()) {/*add check number bus*/
+                log.debug("ooo "+busThread.getName());
+                if (busThread.isSeatsFree() && busThread.getVector()==vector) {
                     busThread.increasePassengers();
                     this.countWalkers--;
                     log.debug("I sat");
-                    if(this.countWalkers==0) busThread.wakeUpDriverBus();
-                    return busThread;
+                    wait=false;
                 }
                 /*case else bus full*/
-                if(busThread!=null) {
+                checkWalkers++;
+                if(checkWalkers==oldCountWalkers){
+                    checkWalkers=0;
                     busThread.wakeUpDriverBus();
-                    busThread=null;/*bus leave*/
+//                    if(wait)
+//                        busThread=null;
                 }
-                log.debug("oh, no places");
+                if (!wait){
+                    return busThread;
+                }
+                else {
+                    log.debug("oh, no places");
+                }
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -42,17 +50,20 @@ public class BusStop {
         synchronized (this) {
             busThread.setCurrentBusStop(this);
             if (busThread.getPassengers() != 0) {
-                synchronized (busThread) {
-                    busThread.wakeUpWalkersInBus();
-                }
+                log.debug("Wait drop walkers...");
+                busThread.wakeUpWalkersInBus();
                 busThread.waitDriverBus();//wait till everyone leaves the bus
+                log.debug("Wait drop walkers...end");
             }
-            log.debug("Loading Walkers...");
+            log.debug("Loading Walkers..."+this.countWalkers+" "+number);
             this.busThread = busThread;
+            this.oldCountWalkers=countWalkers;
+            busThread.statusSleep();
             this.notifyAll();
         }
         if(this.countWalkers!=0)
             busThread.waitDriverBus();//wait till everyone enters the bus
+
 
     }
 

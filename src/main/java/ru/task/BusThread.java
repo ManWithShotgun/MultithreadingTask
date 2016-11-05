@@ -7,6 +7,8 @@ import org.apache.log4j.Logger;
  */
 public class BusThread extends Thread {
 
+    enum Status{RUN,STOP,SLEEP};
+
     class RoutePoint{
         int index, countExit=0;
 
@@ -33,14 +35,17 @@ public class BusThread extends Thread {
 
     private Logger log;
     private int maxSeats =2, passengers =0, checkCount =0, oldCountPassengers =0,
-            startIndex, startVector, busNumber, idleCount, maxIdleCount;
+            startIndex, vector, busNumber, idleCount, maxIdleCount, speed;
     private BusStop currentBusStop;
     private Object sleepObj=new Object();
+    private Status status=Status.RUN;
 
-    public BusThread(int busNumber, int startIndex, int startVector) {
+    public BusThread(int busNumber, int maxSeats, int startIndex, int vector, int speed) {
+        this.maxSeats=maxSeats;
         this.busNumber=busNumber;
         this.startIndex=startIndex;
-        this.startVector = startVector;
+        this.vector = vector;
+        this.speed=speed;
         log=Logger.getLogger("Bus"+busNumber);
         this.setName("Bus"+busNumber);
     }
@@ -50,14 +55,22 @@ public class BusThread extends Thread {
         try {
             log.debug("Start");
             int countBusStop=BusStops.busStops.size();
-            maxIdleCount=countBusStop*2+1;
+            maxIdleCount=countBusStop*2+2;
             boolean move=true;
-            for (int index = startIndex, j = startVector; move;){
+            for (int index = startIndex, j = vector; move;){
+                if(index==countBusStop){
+                    index=0;
+                }
+                if(index==-1){
+                    index=countBusStop-1;
+                }
                 //region calc step
-                if(index==countBusStop-1)
-                    j=-1;
-                if(index==0)
-                    j=1;
+//                if(index==countBusStop-1) {
+//                    j = -1;
+//                }
+//                if(index==0) {
+//                    j = 1;
+//                }
                 //endregion
                 if(passengers==0)
                     idleCount++;
@@ -77,10 +90,10 @@ public class BusThread extends Thread {
     }
 
     private void move() throws InterruptedException {
-        Thread.sleep(100);//simulation moving from bus stop i to bus stop i+1
+        Thread.sleep(speed);//simulation moving from bus stop i to bus stop i+1
     }
 
-    private void step(int i){
+    private void step(int i) throws InterruptedException {
         log.debug("going to "+i);
         BusStops.busStops.get(i).notifyAllOnBS(log,this);
         log.debug("running");
@@ -89,7 +102,7 @@ public class BusThread extends Thread {
     public void waitDriverBus(){
         synchronized (this.sleepObj) {
             try {
-                this.sleepObj.wait();
+                if(status==Status.SLEEP) this.sleepObj.wait();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -98,6 +111,7 @@ public class BusThread extends Thread {
 
     public void wakeUpDriverBus(){
         synchronized (this.sleepObj) {
+            this.status=Status.STOP;
             this.sleepObj.notifyAll();//or .notify
         }
     }
@@ -128,9 +142,22 @@ public class BusThread extends Thread {
         }
     }
 
+    public int getVector() {
+        return vector;
+    }
+
     public synchronized void wakeUpWalkersInBus(){
-        this.oldCountPassengers = passengers;//not using now
+        this.oldCountPassengers = passengers;
+        this.status=Status.SLEEP;
         this.notifyAll();
+    }
+
+    public void statusSleep(){
+        this.status=Status.SLEEP;
+    }
+
+    public void statusRun(){
+        this.status=Status.RUN;
     }
 
     public int getPassengers(){

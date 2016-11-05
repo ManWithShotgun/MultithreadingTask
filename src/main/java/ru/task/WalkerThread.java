@@ -19,6 +19,11 @@ public class WalkerThread extends Thread {
 
     @Override
     public void run() {
-        BusStops.busStops.get(indexStart).waitOnBS(log).waitInBus(log,indexEnd);
+        int vector;
+        if(indexStart-indexEnd>0)
+            vector=-1;
+        else
+            vector=1;
+        BusStops.busStops.get(indexStart).waitOnBS(log, vector).waitInBus(log,indexEnd);
     }
 }

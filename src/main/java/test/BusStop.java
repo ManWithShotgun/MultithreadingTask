@@ -14,6 +14,7 @@ public class BusStop {
                 System.out.println("before wait");
                 this.wait();
                 System.out.println("after wait");
+                this.notify();
 
 
             } catch (InterruptedException e) {
@@ -24,11 +25,11 @@ public class BusStop {
 
     public synchronized void busThis(){
         try {
-            Thread.sleep(10000);
+            Thread.sleep(2000);
             System.out.println("enter monitor");
             this.notifyAll();
+            this.wait();
             System.out.println("free monitor");
-            Thread.sleep(2000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

@@ -8,7 +8,7 @@ public class Bus extends Thread {
     @Override
     public void run() {
         try {
-            Thread.sleep(1000);
+            Thread.sleep(0);
             BusStops.busStop.busThis();
         } catch (InterruptedException e) {
             e.printStackTrace();

@@ -1,6 +1,7 @@
 package ru.task;
 
 import java.util.Random;
+import java.util.ResourceBundle;
 
 /**
  * Created by ILIA on 23.10.2016.
@@ -8,25 +9,42 @@ import java.util.Random;
 public class Main {
     public static void main(String[] args) {
         try {
-
-            Random rnd=new Random();
-            for (int i=0;i<10;i++){
-                new WalkerThread(i, rnd.nextInt(10),rnd.nextInt(10)).start();
-            }
-//            new WalkerThread(1,4,2).start();
-//            new WalkerThread(2,4,2).start();
-//            new WalkerThread(3,4,2).start();
-//            new WalkerThread(4,4,2).start();
-
-//            Thread.sleep(20000);
-            Thread.sleep(2000);
-            new BusThread(1,0,1).start();
-            new BusThread(2,8,-1).start();
-            new BusThread(3,2,1).start();
-
+            init();
 
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private static void init() throws InterruptedException {
+        ResourceBundle config=ResourceBundle.getBundle("config");
+        int walkers=Integer.parseInt(config.getString("walkers"));
+        int busStops=Integer.parseInt(config.getString("busStops"));
+        busStops*=2;
+        int buses=Integer.parseInt(config.getString("buses"));
+        Random rnd=new Random();
+
+        /*Инициализация остановок*/
+        BusStops.loadBusStops(busStops);
+
+        /*Инициализация пассажиров*/
+        for (int i=0;i<walkers;i++){
+            new WalkerThread(i, rnd.nextInt(busStops),rnd.nextInt(busStops)).start();
+        }
+
+        /*Ждем, чтобы все пассажиры "зашли" на остановки.
+        *  Можно и не ждать, тогда пассажиры будут доходить
+        *  до остановок во ремя работы автобусов
+        * */
+        Thread.sleep(1000);
+
+        /*Инициализация автобусов*/
+        for (int i=1;i<=buses;i++){
+            int maxSeats=Integer.parseInt(config.getString("bus."+i+".size"));
+            int vector=Integer.parseInt(config.getString("bus."+i+".vector"));
+            int startIndex=Integer.parseInt(config.getString("bus."+i+".startIndex"));
+            int speed=Integer.parseInt(config.getString("bus."+i+".speed"));
+            new BusThread(i,maxSeats,startIndex,vector,speed).start();
         }
     }
 }
