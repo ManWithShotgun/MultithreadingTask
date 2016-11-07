@@ -9,29 +9,29 @@ public class BusThread extends Thread {
 
     enum Status{RUN,STOP,SLEEP};
 
-    class RoutePoint{
-        int index, countExit=0;
-
-        public RoutePoint(int index) {
-            this.index = index;
-        }
-
-        public int getIndex() {
-            return index;
-        }
-
-        public int getCountExit() {
-            return countExit;
-        }
-
-        public void increaseCountExit(){
-            this.countExit++;
-        }
-
-        public void decreaseCountExit(){
-            this.countExit--;
-        }
-    }
+//    class RoutePoint{
+//        int index, countExit=0;
+//
+//        public RoutePoint(int index) {
+//            this.index = index;
+//        }
+//
+//        public int getIndex() {
+//            return index;
+//        }
+//
+//        public int getCountExit() {
+//            return countExit;
+//        }
+//
+//        public void increaseCountExit(){
+//            this.countExit++;
+//        }
+//
+//        public void decreaseCountExit(){
+//            this.countExit--;
+//        }
+//    }
 
     /**
      * maxIdleCount - кол-во остановок без пассажиров.

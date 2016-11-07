@@ -38,9 +38,6 @@ public class Main {
         * */
         Thread.sleep(1000);
 
-        boolean custom=Boolean.parseBoolean(config.getString("custom"));
-
-
         /*Инициализация автобусов*/
         for (int i = 1; i <= buses; i++) {
             Thread.sleep(Integer.parseInt(config.getString("bus." + i + ".interval")));
