@@ -38,13 +38,18 @@ public class Main {
         * */
         Thread.sleep(1000);
 
+        boolean custom=Boolean.parseBoolean(config.getString("custom"));
+
+
         /*Инициализация автобусов*/
-        for (int i=1;i<=buses;i++){
-            int maxSeats=Integer.parseInt(config.getString("bus."+i+".size"));
-            int vector=Integer.parseInt(config.getString("bus."+i+".vector"));
-            int startIndex=Integer.parseInt(config.getString("bus."+i+".startIndex"));
-            int speed=Integer.parseInt(config.getString("bus."+i+".speed"));
-            new BusThread(i,maxSeats,startIndex,vector,speed).start();
+        for (int i = 1; i <= buses; i++) {
+            Thread.sleep(Integer.parseInt(config.getString("bus." + i + ".interval")));
+            int maxSeats = Integer.parseInt(config.getString("bus." + i + ".size"));
+            int vector = Integer.parseInt(config.getString("bus." + i + ".vector"));
+            int startIndex = Integer.parseInt(config.getString("bus." + i + ".startIndex"));
+            int speed = Integer.parseInt(config.getString("bus." + i + ".speed"));
+            new BusThread(i, maxSeats, startIndex, vector, speed).start();
         }
+
     }
 }

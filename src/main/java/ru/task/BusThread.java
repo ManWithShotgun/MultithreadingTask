@@ -33,6 +33,12 @@ public class BusThread extends Thread {
         }
     }
 
+    /**
+     * maxIdleCount - кол-во остановок без пассажиров.
+     * Если это значение больше полного марштура +2 остановки, то атобус завершает свою работу.
+     *
+     * sleepObj - объект на котором ждет автобус во время выгрузки и загрузки пассажиров
+     * */
     private Logger log;
     private int maxSeats =2, passengers =0, checkCount =0, oldCountPassengers =0,
             startIndex, vector, busNumber, idleCount, maxIdleCount, speed;
@@ -55,23 +61,19 @@ public class BusThread extends Thread {
         try {
             log.debug("Start");
             int countBusStop=BusStops.busStops.size();
-            maxIdleCount=countBusStop*2+2;
+            maxIdleCount=countBusStop*2+2;//макс. пустых остановок= полный маршрут +2 ост.
             boolean move=true;
             for (int index = startIndex, j = vector; move;){
+
+                //region Условие движения по кругу
                 if(index==countBusStop){
                     index=0;
                 }
                 if(index==-1){
                     index=countBusStop-1;
                 }
-                //region calc step
-//                if(index==countBusStop-1) {
-//                    j = -1;
-//                }
-//                if(index==0) {
-//                    j = 1;
-//                }
                 //endregion
+
                 if(passengers==0)
                     idleCount++;
                 else
@@ -89,6 +91,7 @@ public class BusThread extends Thread {
         }
     }
 
+    /*Симмулирует дижение автобуса между ост.*/
     private void move() throws InterruptedException {
         Thread.sleep(speed);//simulation moving from bus stop i to bus stop i+1
     }
@@ -116,26 +119,26 @@ public class BusThread extends Thread {
         }
     }
 
+    /*Логика пассажиров в автобусе*/
     public synchronized void waitInBus(Logger log, int indexEnd){
         try {
             log.debug(this.log.getName()+" | sat in Bus");
             boolean move=true;
             while (move) {
-                this.wait();
-                if (this.getCurrentBusStop().getNumber() == indexEnd) {
+                this.wait();//ожидвет прибыстия на остановку
+                if (this.getCurrentBusStop().getNumber() == indexEnd) {//сверяет номер ост.
+                    /*Если это нужная остановка -> уменьшет кол-во пассажиров
+                     и завершает последний цикл*/
                     this.decreasePassengers();
                     log.debug(this.log.getName()+" | end point");
-//                    BusStops.decreaseTotalCountWalkersAlive();
                     move=false;
                 }
-                /*count checkCount walkers && bus is full -> run*/
                 this.checkCount++;
                 log.debug(this.log.getName()+" | check walker");
-                if(checkCount == oldCountPassengers){
-                    this.wakeUpDriverBus();
+                if(checkCount == oldCountPassengers){//если это последний опрошенный пассажир в авто.
+                    this.wakeUpDriverBus();//notify водителя авто. на запус пассажиров с ост.
                     this.checkCount =0;
                 }
-//                log.debug(this.log.getName()+" | not my stop");
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
